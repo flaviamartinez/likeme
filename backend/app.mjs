@@ -18,22 +18,54 @@ const pool = new Pool (
 )
 
 app.get('/posts', async (req, res) => {
-	const query = "SELECT * FROM posts"
-	const { rows }  = await pool.query(query)
-	res.json(rows)
+	try {
+		const query = "SELECT * FROM posts"
+		const { rows }  = await pool.query(query)
+		res.json(rows)
+	} catch (error) {
+		res.status(500).send(error)
+	}
 })
 
 app.post('/posts', async (req, res) => {
-	const query = 'INSERT INTO posts VALUES(DEFAULT, $1, $2, $3, 0)'
-	const { titulo, url, descripcion } = req.body
-
-	if (!titulo || !url || !descripcion) {
-		return res.status(400).json({error: 'Todos los campos son obligatorios'})
+	try {
+		const query = 'INSERT INTO posts VALUES(DEFAULT, $1, $2, $3, 0)'
+		const { titulo, url, descripcion } = req.body
+	
+		if (!titulo || !url || !descripcion) {
+			return res.status(400).json({error: 'Todos los campos son obligatorios'})
+		}
+	
+		const values = [titulo, url, descripcion]
+		const result = await pool.query(query, values)
+		res.send(result)
+	} catch (error) {
+		res.status(500).send(error)
 	}
+})
 
-	const values = [titulo, url, descripcion]
-	const result = await pool.query(query, values)
-	res.send(result)
+app.put('/posts/like/:id', async(req, res) => {
+	try {
+		const { id } = req.params
+		const query = 'UPDATE posts SET likes = likes + 1 WHERE id = $1'
+		const values = [id]
+		const result = await pool.query(query, values)
+		res.json(result)
+	} catch (error) {
+		res.status(500).send(error)
+	}
+})
+
+app.delete('/posts/:id', async(req, res) => {
+	try {
+		const { id } = req.params
+		const query = 'DELETE FROM posts WHERE id = $1'
+		const values = [id]
+		const result = await pool.query(query, values)
+		res.json(result)
+	} catch (error) {
+		res.status(500).send(error)
+	}
 })
 
 app.listen(3000, () => {
